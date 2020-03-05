@@ -1,13 +1,14 @@
-const properties = require("./json/properties.json");
-const users = require("./json/users.json");
-const { Pool } = require("pg");
+// const properties = require("./json/properties.json");
+// const users = require("./json/users.json");
+// const { Pool } = require("pg");
 
-const pool = new Pool({
-  user: "david",
-  password: "123",
-  host: "localhost",
-  database: "lightbnb"
-});
+// const pool = new Pool({
+//   user: "david",
+//   password: "123",
+//   host: "localhost",
+//   database: "lightbnb"
+// });
+const pool = require("../proj_structure");
 /// Users
 
 /**
@@ -107,33 +108,34 @@ const getAllProperties = function(options, limit = 10) {
   // 2
   let queryString = `SELECT properties.*, avg(property_reviews.rating) as average_rating
   FROM properties
-  JOIN property_reviews ON properties.id = property_id
+  LEFT JOIN property_reviews ON properties.id = property_id
+  WHERE true
   `;
 
   // 3
   if (options.city) {
     queryParams.push(`%${options.city}%`);
-    queryString += `WHERE city LIKE $${queryParams.length} `;
+    queryString += `AND city LIKE $${queryParams.length} `;
   }
 
   if (options.owner_id) {
     queryParams.push(options.owner_id);
-    queryString += `AND owner_id LIKE $${queryParams.length} `;
+    queryString += `AND owner_id = $${queryParams.length} `;
   }
 
   if (options.minimum_price_per_night) {
     queryParams.push(options.minimum_price_per_night * 100);
-    queryString += `AND minimum_price_per_night LIKE $${queryParams.length} `;
+    queryString += `AND cost_per_night >= $${queryParams.length} `;
   }
 
   if (options.maximum_price_per_night) {
     queryParams.push(options.maximum_price_per_night * 100);
-    queryString += `AND maximum_price_per_night LIKE $${queryParams.length} `;
+    queryString += `AND cost_per_night <= $${queryParams.length} `;
   }
 
   if (options.minimum_rating) {
     queryParams.push(options.minimum_rating);
-    queryString += `AND property_reviews.rating LIKE $${queryParams.length} `;
+    queryString += `AND property_reviews.rating >= $${queryParams.length} `;
   }
 
   // 4
@@ -194,7 +196,7 @@ const addProperty = function(property) {
         property.number_of_bedrooms
       ]
     )
-    .then(res => res.rows);
+    .then(res => res.rows[0]);
 
   // const propertyId = Object.keys(properties).length + 1;
   // property.id = propertyId;
